@@ -1,0 +1,2 @@
+[workspace]
+members = ["rgit-cli", "rgit-server"]
