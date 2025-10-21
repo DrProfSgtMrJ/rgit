@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs::{self, File},
+    path::{Path, PathBuf},
+};
 
 const RGIT_DIR_NAME: &str = ".rgit";
 const HEAD_FILE_NAME: &str = "HEAD";
@@ -10,6 +13,9 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Str
     let rgit_dir_path = create_rgit_dir(&name)
         .map_err(|e| format!("failed to create directory in  {:?}: {}", name, e))?;
 
+    // Creates HEAD file
+    create_head_file(&rgit_dir_path)
+        .map_err(|e| format!("failed to create HEAD file in  {:?}: {}", name, e))?;
     Ok(())
 }
 
@@ -20,4 +26,12 @@ fn create_rgit_dir(name: &PathBuf) -> Result<PathBuf, std::io::Error> {
     fs::create_dir_all(rgit_dir_path.as_path())?;
 
     Ok(rgit_dir_path)
+}
+
+fn create_head_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
+    let head_file_path = rgit_dir_path.join(HEAD_FILE_NAME);
+
+    let _ = File::create(head_file_path)?;
+
+    Ok(())
 }
