@@ -8,10 +8,10 @@ const RGIT_DIR_NAME: &str = ".rgit";
 const HEAD_FILE_NAME: &str = "HEAD";
 const CONFIG_FILE_NAME: &str = "config";
 const DESCRIPTION_FILE_NAME: &str = "description";
-const HOOKS_DIR_NAME: &str = "/hooks";
-const INFO_DIR_NAME: &str = "/info";
-const OBJECTS_DIR_NAME: &str = "/objects";
-const REFS_DIR_NAME: &str = "/refs";
+const HOOKS_DIR_NAME: &str = "hooks";
+const INFO_DIR_NAME: &str = "info";
+const OBJECTS_DIR_NAME: &str = "objects";
+const REFS_DIR_NAME: &str = "refs";
 
 pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), String> {
     // Create a directory with the name
@@ -28,6 +28,34 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Str
 
     create_file(&rgit_dir_path, DESCRIPTION_FILE_NAME, description)
         .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
+
+    let _ = create_dir(&rgit_dir_path, HOOKS_DIR_NAME, false).map_err(|e| {
+        format!(
+            "failed to create HOOKS directory in  {:?}: {}",
+            rgit_dir_path, e
+        )
+    })?;
+
+    let _ = create_dir(&rgit_dir_path, INFO_DIR_NAME, false).map_err(|e| {
+        format!(
+            "failed to create INFO directory in  {:?}: {}",
+            rgit_dir_path, e
+        )
+    })?;
+
+    let _ = create_dir(&rgit_dir_path, OBJECTS_DIR_NAME, false).map_err(|e| {
+        format!(
+            "failed to create OBJECTS directory in  {:?}: {}",
+            rgit_dir_path, e
+        )
+    })?;
+
+    let _ = create_dir(&rgit_dir_path, REFS_DIR_NAME, false).map_err(|e| {
+        format!(
+            "failed to create REFS directory in  {:?}: {}",
+            rgit_dir_path, e
+        )
+    })?;
 
     println!("Initialized repo {:?}", name.clone());
     Ok(())
