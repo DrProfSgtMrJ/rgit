@@ -8,67 +8,58 @@ const RGIT_DIR_NAME: &str = ".rgit";
 const HEAD_FILE_NAME: &str = "HEAD";
 const CONFIG_FILE_NAME: &str = "config";
 const DESCRIPTION_FILE_NAME: &str = "description";
+const HOOKS_DIR_NAME: &str = "/hooks";
+const INFO_DIR_NAME: &str = "/info";
+const OBJECTS_DIR_NAME: &str = "/objects";
+const REFS_DIR_NAME: &str = "/refs";
 
 pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), String> {
-    // Create a directory wit hthe name
-    let rgit_dir_path = create_rgit_dir(&name)
+    // Create a directory with the name
+    let rgit_dir_path = create_dir(&name, RGIT_DIR_NAME, true)
         .map_err(|e| format!("failed to create directory in  {:?}: {}", name, e))?;
 
     // Creates HEAD file
-    create_head_file(&rgit_dir_path)
+    create_file(&rgit_dir_path, HEAD_FILE_NAME, None)
         .map_err(|e| format!("failed to create HEAD file in  {:?}: {}", name, e))?;
 
     // Creates config file
-    create_config_file(&rgit_dir_path)
+    create_file(&rgit_dir_path, CONFIG_FILE_NAME, None)
         .map_err(|e| format!("failed to create config file in  {:?}: {}", name, e))?;
 
-    match description {
-        Some(desc) => {
-            create_description_file(&rgit_dir_path, desc)
-                .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
-        }
-        None => {
-            create_description_file(&rgit_dir_path, String::from(""))
-                .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
-        }
-    }
+    create_file(&rgit_dir_path, DESCRIPTION_FILE_NAME, description)
+        .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
 
     println!("Initialized repo {:?}", name.clone());
     Ok(())
 }
 
-fn create_rgit_dir(name: &PathBuf) -> Result<PathBuf, std::io::Error> {
-    // /name/.rgit
-    let rgit_dir_path = name.join(RGIT_DIR_NAME);
-    fs::create_dir_all(rgit_dir_path.as_path())?;
-
-    Ok(rgit_dir_path)
-}
-
-fn create_head_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
-    let head_file_path = rgit_dir_path.join(HEAD_FILE_NAME);
-
-    let _ = File::create(head_file_path)?;
-
-    Ok(())
-}
-
-fn create_config_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
-    let config_file_path = rgit_dir_path.join(CONFIG_FILE_NAME);
-
-    let _ = File::create(config_file_path)?;
-
-    Ok(())
-}
-
-fn create_description_file(
-    rgit_dir_path: &Path,
-    description: String,
+fn create_file(
+    dir_path: &Path,
+    file_name: &str,
+    content: Option<String>,
 ) -> Result<(), std::io::Error> {
-    let description_file_path = rgit_dir_path.join(DESCRIPTION_FILE_NAME);
-    let mut description_file = File::create(description_file_path)?;
+    let full_path = dir_path.join(file_name);
 
-    description_file.write_all(description.as_bytes())?;
+    let mut file = File::create(full_path)?;
+    if let Some(con) = content {
+        file.write_all(con.as_bytes())?;
+    }
 
     Ok(())
+}
+
+fn create_dir(
+    root_dir_path: &Path,
+    dir_name: &str,
+    recursive: bool,
+) -> Result<PathBuf, std::io::Error> {
+    let full_path = root_dir_path.join(dir_name);
+
+    if recursive {
+        fs::create_dir_all(full_path.as_path())?;
+    } else {
+        fs::create_dir(full_path.as_path())?;
+    }
+
+    Ok(full_path)
 }
