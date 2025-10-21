@@ -16,6 +16,11 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Str
     // Creates HEAD file
     create_head_file(&rgit_dir_path)
         .map_err(|e| format!("failed to create HEAD file in  {:?}: {}", name, e))?;
+
+    // Creates config file
+    create_config_file(&rgit_dir_path)
+        .map_err(|e| format!("failed to create config file in  {:?}: {}", name, e))?;
+
     Ok(())
 }
 
@@ -32,6 +37,14 @@ fn create_head_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
     let head_file_path = rgit_dir_path.join(HEAD_FILE_NAME);
 
     let _ = File::create(head_file_path)?;
+
+    Ok(())
+}
+
+fn create_config_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
+    let config_file_path = rgit_dir_path.join(CONFIG_FILE_NAME);
+
+    let _ = File::create(config_file_path)?;
 
     Ok(())
 }
