@@ -1,5 +1,6 @@
 use std::{
     fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -21,12 +22,23 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Str
     create_config_file(&rgit_dir_path)
         .map_err(|e| format!("failed to create config file in  {:?}: {}", name, e))?;
 
+    match description {
+        Some(desc) => {
+            create_description_file(&rgit_dir_path, desc)
+                .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
+        }
+        None => {
+            create_description_file(&rgit_dir_path, String::from(""))
+                .map_err(|e| format!("failed to create descriptiuon file {}", e))?;
+        }
+    }
+
+    println!("Initialized repo {:?}", name.clone());
     Ok(())
 }
 
 fn create_rgit_dir(name: &PathBuf) -> Result<PathBuf, std::io::Error> {
     // /name/.rgit
-    println!("name: {:?}", name);
     let rgit_dir_path = name.join(RGIT_DIR_NAME);
     fs::create_dir_all(rgit_dir_path.as_path())?;
 
@@ -45,6 +57,18 @@ fn create_config_file(rgit_dir_path: &Path) -> Result<(), std::io::Error> {
     let config_file_path = rgit_dir_path.join(CONFIG_FILE_NAME);
 
     let _ = File::create(config_file_path)?;
+
+    Ok(())
+}
+
+fn create_description_file(
+    rgit_dir_path: &Path,
+    description: String,
+) -> Result<(), std::io::Error> {
+    let description_file_path = rgit_dir_path.join(DESCRIPTION_FILE_NAME);
+    let mut description_file = File::create(description_file_path)?;
+
+    description_file.write_all(description.as_bytes())?;
 
     Ok(())
 }
