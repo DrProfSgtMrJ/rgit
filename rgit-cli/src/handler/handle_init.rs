@@ -1,17 +1,6 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::{Path, PathBuf},
-};
-
-const RGIT_DIR_NAME: &str = ".rgit";
-const HEAD_FILE_NAME: &str = "HEAD";
-const CONFIG_FILE_NAME: &str = "config";
-const DESCRIPTION_FILE_NAME: &str = "description";
-const HOOKS_DIR_NAME: &str = "hooks";
-const INFO_DIR_NAME: &str = "info";
-const OBJECTS_DIR_NAME: &str = "objects";
-const REFS_DIR_NAME: &str = "refs";
+use super::constants::*;
+use super::utils::*;
+use std::path::PathBuf;
 
 pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), String> {
     // Create a directory with the name
@@ -59,35 +48,4 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Str
 
     println!("Initialized repo {:?}", name.clone());
     Ok(())
-}
-
-fn create_file(
-    dir_path: &Path,
-    file_name: &str,
-    content: Option<String>,
-) -> Result<(), std::io::Error> {
-    let full_path = dir_path.join(file_name);
-
-    let mut file = File::create(full_path)?;
-    if let Some(con) = content {
-        file.write_all(con.as_bytes())?;
-    }
-
-    Ok(())
-}
-
-fn create_dir(
-    root_dir_path: &Path,
-    dir_name: &str,
-    recursive: bool,
-) -> Result<PathBuf, std::io::Error> {
-    let full_path = root_dir_path.join(dir_name);
-
-    if recursive {
-        fs::create_dir_all(full_path.as_path())?;
-    } else {
-        fs::create_dir(full_path.as_path())?;
-    }
-
-    Ok(full_path)
 }
