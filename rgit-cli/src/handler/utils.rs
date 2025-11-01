@@ -19,18 +19,12 @@ pub fn create_file(
     Ok(())
 }
 
-pub fn create_dir(
-    root_dir_path: &Path,
-    dir_name: &str,
-    recursive: bool,
-) -> Result<PathBuf, std::io::Error> {
-    let full_path = root_dir_path.join(dir_name);
-
+pub fn create_dir(full_path: &PathBuf, recursive: bool) -> Result<(), std::io::Error> {
     if recursive {
         fs::create_dir_all(full_path.as_path())?;
     } else {
         fs::create_dir(full_path.as_path())?;
     }
 
-    Ok(full_path)
+    Ok(())
 }
