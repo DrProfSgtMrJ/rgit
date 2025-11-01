@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::Write,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 pub fn create_file(
@@ -19,11 +19,11 @@ pub fn create_file(
     Ok(())
 }
 
-pub fn create_dir(full_path: &PathBuf, recursive: bool) -> Result<(), std::io::Error> {
+pub fn create_dir(full_path: &Path, recursive: bool) -> Result<(), std::io::Error> {
     if recursive {
-        fs::create_dir_all(full_path.as_path())?;
+        fs::create_dir_all(full_path)?;
     } else {
-        fs::create_dir(full_path.as_path())?;
+        fs::create_dir(full_path)?;
     }
 
     Ok(())

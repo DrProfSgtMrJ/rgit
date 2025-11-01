@@ -11,7 +11,7 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Han
         )));
     }
 
-    create_dir(&rgit_dir_path, true).map_err(|e| {
+    create_dir(rgit_dir_path.as_path(), true).map_err(|e| {
         HandlerErrors::init_create_error(format!(
             "failed to create directory in  {:?}: {}",
             name, e
@@ -38,24 +38,24 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Han
         HandlerErrors::init_create_error(format!("failed to create descriptiuon file {}", e))
     })?;
 
-    let hooks_dir_path = &rgit_dir_path.join(HOOKS_DIR_NAME);
-    create_dir(hooks_dir_path, false).map_err(|e| {
+    let hooks_dir_path = rgit_dir_path.join(HOOKS_DIR_NAME);
+    create_dir(hooks_dir_path.as_path(), false).map_err(|e| {
         HandlerErrors::init_create_error(format!(
             "failed to create HOOKS directory in  {:?}: {}",
             rgit_dir_path, e
         ))
     })?;
 
-    let info_dir_path = &rgit_dir_path.join(INFO_DIR_NAME);
-    create_dir(info_dir_path, false).map_err(|e| {
+    let info_dir_path = rgit_dir_path.join(INFO_DIR_NAME);
+    create_dir(info_dir_path.as_path(), false).map_err(|e| {
         HandlerErrors::init_create_error(format!(
             "failed to create INFO directory in  {:?}: {}",
             rgit_dir_path, e
         ))
     })?;
 
-    let objects_dir_path = &rgit_dir_path.join(OBJECTS_DIR_NAME);
-    create_dir(objects_dir_path, false).map_err(|e| {
+    let objects_dir_path = rgit_dir_path.join(OBJECTS_DIR_NAME);
+    create_dir(objects_dir_path.as_path(), false).map_err(|e| {
         HandlerErrors::init_create_error(format!(
             "failed to create OBJECTS directory in  {:?}: {}",
             rgit_dir_path, e
@@ -63,7 +63,7 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Han
     })?;
 
     let refs_dir_path = &rgit_dir_path.join(REFS_DIR_NAME);
-    let _ = create_dir(refs_dir_path, false).map_err(|e| {
+    create_dir(refs_dir_path, false).map_err(|e| {
         HandlerErrors::init_create_error(format!(
             "failed to create REFS directory in  {:?}: {}",
             rgit_dir_path, e
