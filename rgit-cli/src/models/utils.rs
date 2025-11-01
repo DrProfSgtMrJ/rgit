@@ -4,17 +4,11 @@ use std::{
     path::Path,
 };
 
-pub fn create_file(
-    dir_path: &Path,
-    file_name: &str,
-    content: Option<String>,
-) -> Result<(), std::io::Error> {
+pub fn create_file(dir_path: &Path, file_name: &str, content: &[u8]) -> Result<(), std::io::Error> {
     let full_path = dir_path.join(file_name);
 
     let mut file = File::create(full_path)?;
-    if let Some(con) = content {
-        file.write_all(con.as_bytes())?;
-    }
+    file.write_all(content)?;
 
     Ok(())
 }

@@ -1,5 +1,5 @@
-use crate::models::{create_dir, create_file, error::Error};
-use std::path::{Path, PathBuf};
+use crate::models::{Index, RgitIndex, create_dir, create_file, error::RgitErrors};
+use std::path::PathBuf;
 
 pub const RGIT_DIR_NAME: &str = ".rgit";
 pub const HEAD_FILE_NAME: &str = "HEAD";
@@ -11,7 +11,7 @@ pub const OBJECTS_DIR_NAME: &str = "objects";
 pub const REFS_DIR_NAME: &str = "refs";
 
 pub trait Repo: Sized {
-    fn init(name: PathBuf, descritpion: Option<String>) -> Result<Self, Error>;
+    fn init(name: PathBuf, descritpion: Option<String>) -> Result<Self, RgitErrors>;
 }
 
 #[derive(Debug)]
@@ -19,6 +19,7 @@ pub struct RgitRepo {
     name: String,
     description: String,
     main_dir_path: PathBuf,
+    index: RgitIndex,
     initialized: bool,
 }
 
@@ -49,52 +50,70 @@ impl RgitRepo {
 }
 
 impl Repo for RgitRepo {
-    fn init(name: PathBuf, description: Option<String>) -> Result<Self, Error> {
+    fn init(name: PathBuf, description: Option<String>) -> Result<Self, RgitErrors> {
         let name_str = String::from(name.to_str().unwrap_or_default());
         let rgit_dir_path = name.join(RGIT_DIR_NAME);
         if rgit_dir_path.exists() {
-            return Err(Error::AlreadyExistsError);
+            return Err(RgitErrors::AlreadyExistsError);
         }
 
-        create_dir(rgit_dir_path.as_path(), true).map_err(|e| Error::CreateDirectoryError {
-            message: format!("failed to create Rgit dir: Error {}", e),
+        create_dir(rgit_dir_path.as_path(), true).map_err(|e| {
+            RgitErrors::CreateDirectoryError {
+                message: format!("failed to create Rgit dir: Error {}", e),
+            }
         })?;
 
-        create_file(&rgit_dir_path, HEAD_FILE_NAME, None).map_err(|e| Error::CreateFileError {
-            message: format!("failed to create HEAD file: Error {}", e),
+        create_file(&rgit_dir_path, HEAD_FILE_NAME, &[]).map_err(|e| {
+            RgitErrors::CreateFileError {
+                message: format!("failed to create HEAD file: Error {}", e),
+            }
         })?;
 
-        create_file(&rgit_dir_path, CONFIG_FILE_NAME, None).map_err(|e| {
-            Error::CreateFileError {
+        create_file(&rgit_dir_path, CONFIG_FILE_NAME, &[]).map_err(|e| {
+            RgitErrors::CreateFileError {
                 message: format!("failed to create config file: Error {}", e),
             }
         })?;
 
-        create_file(&rgit_dir_path, DESCRIPTION_FILE_NAME, description.clone()).map_err(|e| {
-            Error::CreateFileError {
+        let description_bytes = description
+            .as_ref()
+            .map_or(&[] as &[u8], |desc| desc.as_bytes());
+
+        create_file(&rgit_dir_path, DESCRIPTION_FILE_NAME, description_bytes).map_err(|e| {
+            RgitErrors::CreateFileError {
                 message: format!("failed to create description file: Error {}", e),
             }
         })?;
 
         let hooks_dir_path = rgit_dir_path.join(HOOKS_DIR_NAME);
-        create_dir(hooks_dir_path.as_path(), false).map_err(|e| Error::CreateDirectoryError {
-            message: format!("failed to create HOOKS directory: Error {}", e),
+        create_dir(hooks_dir_path.as_path(), false).map_err(|e| {
+            RgitErrors::CreateDirectoryError {
+                message: format!("failed to create HOOKS directory: Error {}", e),
+            }
         })?;
 
         let info_dir_path = rgit_dir_path.join(INFO_DIR_NAME);
-        create_dir(info_dir_path.as_path(), false).map_err(|e| Error::CreateDirectoryError {
-            message: format!("failed to create info directory: Error {}", e),
+        create_dir(info_dir_path.as_path(), false).map_err(|e| {
+            RgitErrors::CreateDirectoryError {
+                message: format!("failed to create info directory: Error {}", e),
+            }
         })?;
 
         let objects_dir_path = rgit_dir_path.join(OBJECTS_DIR_NAME);
-        create_dir(objects_dir_path.as_path(), false).map_err(|e| Error::CreateDirectoryError {
-            message: format!("failed to create objects directory: Error {}", e),
+        create_dir(objects_dir_path.as_path(), false).map_err(|e| {
+            RgitErrors::CreateDirectoryError {
+                message: format!("failed to create objects directory: Error {}", e),
+            }
         })?;
 
         let refs_dir_path = rgit_dir_path.join(REFS_DIR_NAME);
-        create_dir(refs_dir_path.as_path(), false).map_err(|e| Error::CreateDirectoryError {
-            message: format!("failed to create REFS directory: Error {}", e),
+        create_dir(refs_dir_path.as_path(), false).map_err(|e| {
+            RgitErrors::CreateDirectoryError {
+                message: format!("failed to create REFS directory: Error {}", e),
+            }
         })?;
+
+        let index = RgitIndex::init(&rgit_dir_path, 2)?;
 
         println!("Initialized empty repo {:?}", name.clone());
 
@@ -102,6 +121,7 @@ impl Repo for RgitRepo {
             name: name_str,
             description: description.clone().unwrap_or_default(),
             main_dir_path: rgit_dir_path,
+            index,
             initialized: true,
         })
     }
