@@ -6,6 +6,7 @@ use clap::Parser;
 
 mod command;
 mod handler;
+mod models;
 
 fn main() -> Result<(), String> {
     let args = Args::parse();
