@@ -1,6 +1,7 @@
 #[derive(Debug)]
-pub enum RgitErrors {
-    AlreadyExistsError,
-    CreateDirectoryError { message: String },
-    CreateFileError { message: String },
+pub enum RgitError {
+    AlreadyExists,
+    CreateDirectory { message: String },
+    CreateFile { message: String },
+    Write { message: String },
 }
