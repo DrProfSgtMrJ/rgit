@@ -1,7 +1,10 @@
 use byteorder::{BigEndian, WriteBytesExt};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
-use crate::models::{RgitError, create_file};
+use crate::models::{IndexEntry, RgitError, create_file};
 
 pub const INDEX_HEADER_SIGNATURE: &str = "DIRC";
 pub const INDEX_FILE_NAME: &str = "index";
@@ -10,17 +13,15 @@ pub trait Index {
     fn init(root_dir: &Path, version: u32) -> Result<Self, RgitError>
     where
         Self: Sized;
-    fn add_entry(&mut self, entry: &IndexEntry);
+    fn add_entry(&mut self, path: &Path) -> Result<(), RgitError>;
+    fn remove_entry(&mut self, path: &Path) -> Result<(), RgitError>;
 }
-
-#[derive(Debug)]
-pub struct IndexEntry {}
 
 #[derive(Debug)]
 pub struct RgitIndex {
     dir_path: PathBuf,
     version: u32,
-    entries: Vec<IndexEntry>,
+    entries: HashMap<String, IndexEntry>,
 }
 
 impl Index for RgitIndex {
@@ -48,11 +49,15 @@ impl Index for RgitIndex {
         Ok(RgitIndex {
             dir_path: full_dir_path,
             version,
-            entries: Vec::new(),
+            entries: HashMap::new(),
         })
     }
 
-    fn add_entry(&mut self, entry: &IndexEntry) {
+    fn add_entry(&mut self, path: &Path) -> Result<(), RgitError> {
+        todo!()
+    }
+
+    fn remove_entry(&mut self, path: &Path) -> Result<(), RgitError> {
         todo!()
     }
 }
