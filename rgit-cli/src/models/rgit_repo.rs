@@ -21,31 +21,18 @@ pub struct RgitRepo {
     main_dir_path: PathBuf,
     index: RgitIndex,
     initialized: bool,
+    head_file_path: PathBuf,
+    config_file_path: PathBuf,
+    descritpion_file_path: PathBuf,
+    hooks_dir_path: PathBuf,
+    info_dir_path: PathBuf,
+    objects_dir_path: PathBuf,
+    refs_dir_path: PathBuf,
 }
 
 impl RgitRepo {
-    pub fn head_file(self) -> PathBuf {
-        self.main_dir_path.join(HEAD_FILE_NAME)
-    }
-
-    pub fn config_file(self) -> PathBuf {
-        self.main_dir_path.join(CONFIG_FILE_NAME)
-    }
-
-    pub fn description_file(self) -> PathBuf {
-        self.main_dir_path.join(DESCRIPTION_FILE_NAME)
-    }
-
-    pub fn hooks_dir(self) -> PathBuf {
-        self.main_dir_path.join(HOOKS_DIR_NAME)
-    }
-
-    pub fn objects_dir(self) -> PathBuf {
-        self.main_dir_path.join(OBJECTS_DIR_NAME)
-    }
-
-    pub fn refs_dir_path(self) -> PathBuf {
-        self.main_dir_path.join(REFS_DIR_NAME)
+    pub fn index_dir_path(&self) -> &PathBuf {
+        &self.index.dir_path
     }
 }
 
@@ -103,12 +90,54 @@ impl Repo for RgitRepo {
 
         println!("Initialized empty repo {:?}", name.clone());
 
+        let head_file_path = rgit_dir_path.join(HEAD_FILE_NAME);
+        let config_file_path = rgit_dir_path.join(CONFIG_FILE_NAME);
+        let description_file_path = rgit_dir_path.join(DESCRIPTION_FILE_NAME);
+
         Ok(RgitRepo {
             name: name_str,
             description: description.clone().unwrap_or_default(),
             main_dir_path: rgit_dir_path,
             index,
             initialized: true,
+            head_file_path: head_file_path,
+            config_file_path: config_file_path,
+            descritpion_file_path: description_file_path,
+            hooks_dir_path: hooks_dir_path,
+            info_dir_path: info_dir_path,
+            objects_dir_path: objects_dir_path,
+            refs_dir_path: refs_dir_path,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_init() {
+        // create temp dir
+        const REPO_NAME: &str = "myrepo";
+        let temp_dir = tempdir().expect("failed to created temp dir");
+        let repo_path = temp_dir.path().join(REPO_NAME);
+
+        let repo_result = RgitRepo::init(REPO_NAME.into(), Some("myrepo".into()));
+
+        assert!(repo_result.is_ok());
+        let repo = repo_result.unwrap();
+
+        assert!(&repo.main_dir_path.exists());
+
+        assert!(repo.refs_dir_path.exists());
+        assert!(repo.config_file_path.exists());
+        assert!(repo.head_file_path.exists());
+        assert!(repo.descritpion_file_path.exists());
+        assert!(repo.hooks_dir_path.exists());
+        assert!(repo.info_dir_path.exists());
+        assert!(repo.objects_dir_path.exists());
+        assert!(repo.index_dir_path().exists());
     }
 }

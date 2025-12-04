@@ -19,9 +19,9 @@ pub trait Index {
 
 #[derive(Debug)]
 pub struct RgitIndex {
-    dir_path: PathBuf,
-    version: u32,
-    entries: HashMap<String, IndexEntry>,
+    pub dir_path: PathBuf,
+    pub version: u32,
+    pub entries: HashMap<String, IndexEntry>,
 }
 
 impl Index for RgitIndex {
