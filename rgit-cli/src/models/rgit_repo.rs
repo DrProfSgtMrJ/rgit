@@ -12,6 +12,7 @@ pub const REFS_DIR_NAME: &str = "refs";
 
 pub trait Repo: Sized {
     fn init(name: PathBuf, descritpion: Option<String>) -> Result<Self, RgitError>;
+    fn remove() -> Result<(), RgitError>;
 }
 
 #[derive(Debug)]
@@ -109,6 +110,7 @@ impl Repo for RgitRepo {
             refs_dir_path: refs_dir_path,
         })
     }
+    fn remove() -> Result<(), RgitError> {}
 }
 
 #[cfg(test)]
