@@ -15,6 +15,7 @@ pub fn handle_init(name: PathBuf, description: Option<String>) -> Result<(), Han
         RgitError::CreateFile { message } => HandlerErrors::init_create_error(message),
         RgitError::Write { message } => HandlerErrors::init_create_error(message),
         RgitError::InvalidPath { message } => HandlerErrors::init_create_error(message),
+        RgitError::DeleteDirectory { message } => HandlerErrors::init_create_error(message),
     })?;
 
     Ok(())

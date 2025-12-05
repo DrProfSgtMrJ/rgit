@@ -1,4 +1,4 @@
-use crate::models::{Index, RgitIndex, create_dir, create_file, error::RgitError};
+use crate::models::{Index, RgitIndex, create_dir, create_file, error::RgitError, remove_dir};
 use std::path::PathBuf;
 
 pub const RGIT_DIR_NAME: &str = ".rgit";
@@ -12,7 +12,7 @@ pub const REFS_DIR_NAME: &str = "refs";
 
 pub trait Repo: Sized {
     fn init(name: PathBuf, descritpion: Option<String>) -> Result<Self, RgitError>;
-    fn remove() -> Result<(), RgitError>;
+    fn remove(&self) -> Result<(), RgitError>;
 }
 
 #[derive(Debug)]
@@ -110,13 +110,19 @@ impl Repo for RgitRepo {
             refs_dir_path: refs_dir_path,
         })
     }
-    fn remove() -> Result<(), RgitError> {}
+    fn remove(&self) -> Result<(), RgitError> {
+        match remove_dir(self.main_dir_path.as_path(), true) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(RgitError::DeleteDirectory {
+                message: format!("Failed to remove directory: {:?}", e),
+            }),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use tempfile::tempdir;
 
     #[test]
@@ -124,7 +130,6 @@ mod tests {
         // create temp dir
         const REPO_NAME: &str = "myrepo";
         let temp_dir = tempdir().expect("failed to created temp dir");
-        let repo_path = temp_dir.path().join(REPO_NAME);
 
         let repo_result = RgitRepo::init(REPO_NAME.into(), Some("myrepo".into()));
 
@@ -141,5 +146,19 @@ mod tests {
         assert!(repo.info_dir_path.exists());
         assert!(repo.objects_dir_path.exists());
         assert!(repo.index_dir_path().exists());
+
+        let remove_result = repo.remove();
+        assert!(remove_result.is_ok());
+
+        assert!(!&repo.main_dir_path.exists());
+
+        assert!(!repo.refs_dir_path.exists());
+        assert!(!repo.config_file_path.exists());
+        assert!(!repo.head_file_path.exists());
+        assert!(!repo.descritpion_file_path.exists());
+        assert!(!repo.hooks_dir_path.exists());
+        assert!(!repo.info_dir_path.exists());
+        assert!(!repo.objects_dir_path.exists());
+        assert!(!repo.index_dir_path().exists());
     }
 }

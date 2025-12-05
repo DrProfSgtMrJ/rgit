@@ -23,6 +23,16 @@ pub fn create_dir(full_path: &Path, recursive: bool) -> Result<(), std::io::Erro
     Ok(())
 }
 
+pub fn remove_dir(full_path: &Path, recursive: bool) -> Result<(), std::io::Error> {
+    if recursive {
+        fs::remove_dir_all(full_path)?;
+    } else {
+        fs::remove_dir(full_path)?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,5 +83,16 @@ mod tests {
         let semi_nested = tmp_dir.path().join("a/b");
         assert!(semi_nested.exists());
         assert!(semi_nested.is_dir());
+    }
+
+    #[test]
+    fn remove_dir_non_recursive() {
+        let tmp_dir = tempdir().unwrap();
+
+        assert!(tmp_dir.path().exists());
+
+        let result = remove_dir(tmp_dir.path(), false);
+
+        assert!(result.is_ok());
     }
 }
