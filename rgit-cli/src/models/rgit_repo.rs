@@ -131,7 +131,8 @@ mod tests {
         const REPO_NAME: &str = "myrepo";
         let temp_dir = tempdir().expect("failed to created temp dir");
 
-        let repo_result = RgitRepo::init(REPO_NAME.into(), Some("myrepo".into()));
+        let full_path = temp_dir.path().join(REPO_NAME);
+        let repo_result = RgitRepo::init(full_path.into(), Some("myrepo".into()));
 
         assert!(repo_result.is_ok());
         let repo = repo_result.unwrap();
