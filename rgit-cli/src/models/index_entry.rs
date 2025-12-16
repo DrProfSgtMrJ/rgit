@@ -230,4 +230,21 @@ mod tests {
             IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
         ));
     }
+
+    #[test]
+    fn test_regular_file_755() {
+        let temp_dir = tempdir().unwrap();
+        let target_path = temp_dir.path().join("target");
+
+        fs::write(&target_path, b"hello").unwrap();
+        fs::set_permissions(&target_path, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let meta = fs::symlink_metadata(&target_path).unwrap();
+        let result = compute_object_type(&target_path, &meta);
+
+        assert!(matches!(
+            result,
+            IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm755)
+        ));
+    }
 }
