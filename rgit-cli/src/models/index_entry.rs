@@ -34,13 +34,13 @@ pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> Option<IndexEntr
     if meta.file_type().is_symlink() {
         return Some(IndexEntryObjectType::Symbolic);
     } else if meta.is_file() {
-        let perms = meta.mode() & 0o777; // lower 9 bits
-        let git_perm = match perms {
-            0o644 => IndexEntryPermissions::Perm644,
-            0o755 => IndexEntryPermissions::Perm755,
-            _ => IndexEntryPermissions::Perm644,
+        let is_executable = meta.mode() & 0o100 != 0;
+        let perm = if is_executable {
+            IndexEntryPermissions::Perm755
+        } else {
+            IndexEntryPermissions::Perm644
         };
-        return Some(IndexEntryObjectType::RegularFile(git_perm));
+        return Some(IndexEntryObjectType::RegularFile(perm));
     } else if meta.is_dir() {
         let rgit_dir = path.join(".rgit");
         if rgit_dir.exists() {
@@ -284,5 +284,24 @@ mod tests {
         let result = compute_object_type(&normal_dir, &meta);
 
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_other_perms_files() {
+        let temp_dir = tempdir().unwrap();
+        let other_file = temp_dir.path().join("other");
+
+        fs::write(&other_file, b"hello").unwrap();
+        // group executable only - owner exec bit NOT set
+        fs::set_permissions(&other_file, fs::Permissions::from_mode(0o650)).unwrap();
+
+        let meta = fs::symlink_metadata(&other_file).unwrap();
+        let result = compute_object_type(&other_file, &meta);
+
+        assert!(result.is_some());
+        assert!(matches!(
+            result.unwrap(),
+            IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
+        ));
     }
 }
