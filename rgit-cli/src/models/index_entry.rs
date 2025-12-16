@@ -162,7 +162,7 @@ mod tests {
 
     use super::*;
     use std::fs;
-    use std::os::unix::fs::symlink;
+    use std::os::unix::fs::{PermissionsExt, symlink};
     use tempfile::tempdir;
 
     #[test]
@@ -212,5 +212,22 @@ mod tests {
         let result = compute_object_type(&link_path, &meta);
 
         assert!(matches!(result, IndexEntryObjectType::Symbolic));
+    }
+
+    #[test]
+    fn test_regular_file_644() {
+        let temp_dir = tempdir().unwrap();
+        let target_path = temp_dir.path().join("target");
+
+        fs::write(&target_path, b"hello").unwrap();
+        fs::set_permissions(&target_path, fs::Permissions::from_mode(0o644)).unwrap();
+
+        let meta = fs::symlink_metadata(&target_path).unwrap();
+        let result = compute_object_type(&target_path, &meta);
+
+        assert!(matches!(
+            result,
+            IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
+        ));
     }
 }
