@@ -29,10 +29,10 @@ pub enum IndexEntryObjectType {
 }
 
 #[cfg(unix)]
-pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> IndexEntryObjectType {
+pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> Option<IndexEntryObjectType> {
     use std::os::unix::fs::MetadataExt;
     if meta.file_type().is_symlink() {
-        return IndexEntryObjectType::Symbolic;
+        return Some(IndexEntryObjectType::Symbolic);
     } else if meta.is_file() {
         let perms = meta.mode() & 0o777; // lower 9 bits
         let git_perm = match perms {
@@ -40,17 +40,17 @@ pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> IndexEntryObject
             0o755 => IndexEntryPermissions::Perm755,
             _ => IndexEntryPermissions::Perm644,
         };
-        return IndexEntryObjectType::RegularFile(git_perm);
+        return Some(IndexEntryObjectType::RegularFile(git_perm));
     } else if meta.is_dir() {
         let rgit_dir = path.join(".rgit");
         if rgit_dir.exists() {
-            return IndexEntryObjectType::Gitlink;
+            return Some(IndexEntryObjectType::Gitlink);
         } else {
-            return IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644);
+            return None;
         }
     }
 
-    IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
+    None
 }
 
 #[cfg(unix)]
@@ -114,13 +114,19 @@ pub struct IndexEntry {
 }
 
 #[cfg(unix)]
-impl From<&Path> for IndexEntry {
-    fn from(path: &Path) -> Self {
+impl IndexEntry {
+    pub fn from_path(path: &Path) -> Option<Self> {
         use std::{fs, os::unix::fs::MetadataExt};
 
         let metadata = fs::symlink_metadata(path).expect("Failed to get path metadata");
 
         let object_type = compute_object_type(path, &metadata);
+
+        if object_type.is_none() {
+            return None;
+        }
+
+        let object_type = object_type.unwrap();
         let stage = IndexEntryStage::default();
         let ctime = metadata.ctime() as u32;
         let ctime_nano = metadata.ctime_nsec() as u32;
@@ -136,7 +142,7 @@ impl From<&Path> for IndexEntry {
 
         let flags = compute_flags(false, stage, path);
 
-        IndexEntry {
+        Some(IndexEntry {
             ctimes: ctime,
             ctimens: ctime_nano,
             mtimes: mtime,
@@ -152,7 +158,7 @@ impl From<&Path> for IndexEntry {
             mode: mode,
             flags: flags,
             assume_valid: false,
-        }
+        })
     }
 }
 
@@ -211,7 +217,8 @@ mod tests {
         let meta = fs::symlink_metadata(&link_path).unwrap();
         let result = compute_object_type(&link_path, &meta);
 
-        assert!(matches!(result, IndexEntryObjectType::Symbolic));
+        assert!(result.is_some());
+        assert!(matches!(result.unwrap(), IndexEntryObjectType::Symbolic));
     }
 
     #[test]
@@ -225,8 +232,9 @@ mod tests {
         let meta = fs::symlink_metadata(&target_path).unwrap();
         let result = compute_object_type(&target_path, &meta);
 
+        assert!(result.is_some());
         assert!(matches!(
-            result,
+            result.unwrap(),
             IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
         ));
     }
@@ -242,9 +250,26 @@ mod tests {
         let meta = fs::symlink_metadata(&target_path).unwrap();
         let result = compute_object_type(&target_path, &meta);
 
+        assert!(result.is_some());
         assert!(matches!(
-            result,
+            result.unwrap(),
             IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm755)
         ));
+    }
+
+    #[test]
+    fn test_directory_with_rgit_is_gitlink() {
+        let temp_dir = tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let rgit_path = repo_path.join(".rgit");
+
+        fs::create_dir(&repo_path).unwrap();
+        fs::create_dir(&rgit_path).unwrap();
+
+        let meta = fs::symlink_metadata(&repo_path).unwrap();
+        let result = compute_object_type(&repo_path, &meta);
+
+        assert!(result.is_some());
+        assert!(matches!(result.unwrap(), IndexEntryObjectType::Gitlink));
     }
 }
