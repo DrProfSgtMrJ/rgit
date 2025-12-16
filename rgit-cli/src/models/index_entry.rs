@@ -159,7 +159,10 @@ impl From<&Path> for IndexEntry {
 #[cfg(test)]
 #[cfg(unix)]
 mod tests {
+
     use super::*;
+    use std::fs;
+    use std::os::unix::fs::symlink;
     use tempfile::tempdir;
 
     #[test]
@@ -194,5 +197,20 @@ mod tests {
         let mode_gitlink = compute_mode(&obj_sym);
 
         assert_eq!(mode_gitlink, expected_gitlink);
+    }
+
+    #[test]
+    fn test_symbolic_link() {
+        let temp_dir = tempdir().unwrap();
+        let target_path = temp_dir.path().join("target");
+        let link_path = temp_dir.path().join("link");
+
+        fs::write(&target_path, b"hello").unwrap();
+        symlink(&target_path, &link_path).unwrap();
+
+        let meta = fs::symlink_metadata(&link_path).unwrap();
+        let result = compute_object_type(&link_path, &meta);
+
+        assert!(matches!(result, IndexEntryObjectType::Symbolic));
     }
 }
