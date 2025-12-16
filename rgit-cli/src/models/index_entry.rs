@@ -272,4 +272,17 @@ mod tests {
         assert!(result.is_some());
         assert!(matches!(result.unwrap(), IndexEntryObjectType::Gitlink));
     }
+
+    #[test]
+    fn test_normal_directory() {
+        let temp_dir = tempdir().unwrap();
+        let normal_dir = temp_dir.path().join("normal");
+
+        fs::create_dir(&normal_dir).unwrap();
+
+        let meta = fs::symlink_metadata(&normal_dir).unwrap();
+        let result = compute_object_type(&normal_dir, &meta);
+
+        assert!(result.is_none());
+    }
 }
