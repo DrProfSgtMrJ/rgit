@@ -314,6 +314,7 @@ mod tests {
         let expected_name_length = 9;
         let expected_stage_bits = 0;
         let mut exepcted_assume_valid_bits = 0;
+        let expected_extended_flag = 0; // 0 for version 2
 
         // lower 12 bits  = name length (9)
         assert_eq!(flags_assume_false & mask, expected_name_length);
@@ -323,6 +324,9 @@ mod tests {
 
         // assume valid bit
         assert_eq!((flags_assume_false >> 15) & 1, exepcted_assume_valid_bits);
+
+        // bit 14
+        assert_eq!((flags_assume_false >> 14) & 1, expected_extended_flag);
 
         let flags_assume_true = compute_flags(true, IndexEntryStage::Normal, path);
         exepcted_assume_valid_bits = 1;
@@ -335,6 +339,9 @@ mod tests {
 
         // assume valid bit
         assert_eq!((flags_assume_true >> 15) & 1, exepcted_assume_valid_bits);
+
+        // bit 14
+        assert_eq!((flags_assume_true >> 14) & 1, expected_extended_flag);
     }
 
     #[test]
@@ -351,5 +358,17 @@ mod tests {
         assert_eq!((base_stage_flags >> 12) & 0b11, expected_base_stage_bit);
         assert_eq!((ours_stage_flags >> 12) & 0b11, expected_ours_stage_bit);
         assert_eq!((theirs_stage_flags >> 12) & 0b11, expected_theirs_stage_bit);
+    }
+
+    #[test]
+    fn test_truncated_name_length() {
+        // path length > 4095
+        let long_path_name = "a".repeat(5000);
+        let path = Path::new(&long_path_name);
+        let expected_name_len_bits = 0x0FFF;
+
+        let long_name_flags = compute_flags(false, IndexEntryStage::Normal, path);
+
+        assert_eq!(long_name_flags & 0x0FFF, expected_name_len_bits);
     }
 }
