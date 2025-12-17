@@ -26,32 +26,32 @@ pub struct IndexEntryFlags {
 #[cfg(unix)]
 impl IndexEntryFlags {
     pub fn from_path(path: &Path, assume_valid: bool, stage: IndexEntryStage) -> Self {
-        let name_len = path.as_os_str().len();
+        let name_len = path.as_os_str().len().min(0xFFF) as u16;
 
         IndexEntryFlags {
-            stage: stage,
-            assume_valid: assume_valid,
-            name_len: name_len.min(0xFFF) as u16,
+            stage,
+            assume_valid,
+            name_len,
         }
     }
 }
 
-impl Into<u16> for IndexEntryFlags {
-    fn into(self) -> u16 {
+impl From<IndexEntryFlags> for u16 {
+    fn from(flags: IndexEntryFlags) -> u16 {
         let mut value: u16 = 0;
 
         // 1-bit assume-valid (bit 15)
-        if self.assume_valid {
+        if flags.assume_valid {
             value |= 1 << 15;
         }
 
         // 1-bit extended flag (bit 14) - always 0 for version 2
 
         // 2-bit stage (bits 12-13)
-        value |= (self.stage as u16 & 0b11) << 12;
+        value |= (flags.stage as u16 & 0b11) << 12;
 
         // 12-bit name length (bits 0-11)
-        value |= self.name_len;
+        value |= flags.name_len & 0x0FFF;
 
         value
     }
