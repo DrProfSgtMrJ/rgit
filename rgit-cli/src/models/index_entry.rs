@@ -29,6 +29,24 @@ pub enum IndexEntryObjectType {
     Gitlink,
 }
 
+impl IndexEntryObjectType {
+    pub fn mode(&self) -> u32 {
+        match self {
+            IndexEntryObjectType::RegularFile(perms) => {
+                let obj_bits: u32 = 0b1000 << 12;
+                let unused_bits: u32 = 0b000 << 9;
+                let perm_bits = match perms {
+                    IndexEntryPermissions::Perm644 => 0o644,
+                    IndexEntryPermissions::Perm755 => 0o755,
+                };
+                obj_bits | unused_bits | perm_bits
+            }
+            IndexEntryObjectType::Symbolic => 0b1010 << 12,
+            IndexEntryObjectType::Gitlink => 0b1110 << 12,
+        }
+    }
+}
+
 #[cfg(unix)]
 pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> Option<IndexEntryObjectType> {
     use std::os::unix::fs::MetadataExt;
@@ -52,23 +70,6 @@ pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> Option<IndexEntr
     }
 
     None
-}
-
-#[cfg(unix)]
-pub fn compute_mode(object_type: &IndexEntryObjectType) -> u32 {
-    match object_type {
-        IndexEntryObjectType::RegularFile(perms) => {
-            let obj_bits: u32 = 0b1000 << 12;
-            let unused_bits: u32 = 0b000 << 9;
-            let perm_bits = match perms {
-                IndexEntryPermissions::Perm644 => 0o644,
-                IndexEntryPermissions::Perm755 => 0o755,
-            };
-            obj_bits | unused_bits | perm_bits
-        }
-        IndexEntryObjectType::Symbolic => 0b1010 << 12,
-        IndexEntryObjectType::Gitlink => 0b1110 << 12,
-    }
 }
 
 #[cfg(unix)]
@@ -139,7 +140,7 @@ impl IndexEntry {
         let gid = metadata.gid();
         let file_size = metadata.size() as u32;
 
-        let mode = compute_mode(&object_type);
+        let mode = object_type.mode();
 
         let flags = compute_flags(false, stage, path);
 
@@ -179,11 +180,8 @@ mod tests {
         let obj_perm644 = IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644);
         let obj_perm755 = IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm755);
 
-        let mode_644 = compute_mode(&obj_perm644);
-        let mode_755 = compute_mode(&obj_perm755);
-
-        assert_eq!(mode_644, expected_perm644);
-        assert_eq!(mode_755, expected_perm755);
+        assert_eq!(obj_perm644.mode(), expected_perm644);
+        assert_eq!(obj_perm755.mode(), expected_perm755);
     }
 
     #[test]
@@ -191,19 +189,15 @@ mod tests {
         let obj_sym = IndexEntryObjectType::Symbolic;
         let expected_sym: u32 = 0b1010 << 12;
 
-        let mode_sym = compute_mode(&obj_sym);
-
-        assert_eq!(mode_sym, expected_sym);
+        assert_eq!(obj_sym.mode(), expected_sym);
     }
 
     #[test]
     fn test_gitlink_mode() {
-        let obj_sym = IndexEntryObjectType::Gitlink;
+        let obj_gitlink = IndexEntryObjectType::Gitlink;
         let expected_gitlink: u32 = 0b1110 << 12;
 
-        let mode_gitlink = compute_mode(&obj_sym);
-
-        assert_eq!(mode_gitlink, expected_gitlink);
+        assert_eq!(obj_gitlink.mode(), expected_gitlink);
     }
 
     #[test]
