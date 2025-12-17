@@ -336,4 +336,20 @@ mod tests {
         // assume valid bit
         assert_eq!((flags_assume_true >> 15) & 1, exepcted_assume_valid_bits);
     }
+
+    #[test]
+    fn test_stage_bits() {
+        let path = Path::new("test");
+        let expected_base_stage_bit = 1;
+        let expected_ours_stage_bit = 2;
+        let expected_theirs_stage_bit = 3;
+
+        let base_stage_flags = compute_flags(false, IndexEntryStage::Base, path);
+        let ours_stage_flags = compute_flags(false, IndexEntryStage::Ours, path);
+        let theirs_stage_flags = compute_flags(false, IndexEntryStage::Theirs, path);
+
+        assert_eq!((base_stage_flags >> 12) & 0b11, expected_base_stage_bit);
+        assert_eq!((ours_stage_flags >> 12) & 0b11, expected_ours_stage_bit);
+        assert_eq!((theirs_stage_flags >> 12) & 0b11, expected_theirs_stage_bit);
+    }
 }
