@@ -1,3 +1,4 @@
+use sha1::{Digest, Sha1};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -303,5 +304,36 @@ mod tests {
             result.unwrap(),
             IndexEntryObjectType::RegularFile(IndexEntryPermissions::Perm644)
         ));
+    }
+
+    #[test]
+    fn test_compute_flags_normal() {
+        let path = Path::new("hello.txt"); // len = 9
+        let flags_assume_false = compute_flags(false, IndexEntryStage::Normal, path);
+        let mask = 0x0FFF as u16;
+        let expected_name_length = 9;
+        let expected_stage_bits = 0;
+        let mut exepcted_assume_valid_bits = 0;
+
+        // lower 12 bits  = name length (9)
+        assert_eq!(flags_assume_false & mask, expected_name_length);
+
+        // stage bits
+        assert_eq!((flags_assume_false >> 12) & 0b11, expected_stage_bits);
+
+        // assume valid bit
+        assert_eq!((flags_assume_false >> 15) & 1, exepcted_assume_valid_bits);
+
+        let flags_assume_true = compute_flags(true, IndexEntryStage::Normal, path);
+        exepcted_assume_valid_bits = 1;
+
+        // lower 12 bits  = name length (9)
+        assert_eq!(flags_assume_true & mask, expected_name_length);
+
+        // stage bits
+        assert_eq!((flags_assume_true >> 12) & 0b11, expected_stage_bits);
+
+        // assume valid bit
+        assert_eq!((flags_assume_true >> 15) & 1, exepcted_assume_valid_bits);
     }
 }
