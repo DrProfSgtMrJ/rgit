@@ -1,11 +1,11 @@
 mod error;
-mod file_utils;
 mod index;
 mod index_entry;
+mod index_entry_serialize;
 mod rgit_repo;
 
 pub use error::*;
-pub use file_utils::*;
 pub use index::*;
 pub use index_entry::*;
+pub use index_entry_serialize::*;
 pub use rgit_repo::*;

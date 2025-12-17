@@ -4,7 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::models::{IndexEntry, RgitError, create_file};
+use super::{IndexEntry, RgitError};
+use crate::file_utils::create_file;
 
 pub const INDEX_HEADER_SIGNATURE: &str = "DIRC";
 pub const INDEX_FILE_NAME: &str = "index";

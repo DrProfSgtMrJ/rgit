@@ -5,8 +5,9 @@ use crate::{
 use clap::Parser;
 
 mod command;
+mod file_utils;
 mod handler;
-mod models;
+mod repo;
 
 fn main() -> Result<(), String> {
     let args = Args::parse();

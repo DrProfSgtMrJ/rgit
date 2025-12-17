@@ -1,4 +1,5 @@
-use crate::models::{Index, RgitIndex, create_dir, create_file, error::RgitError, remove_dir};
+use super::{Index, RgitIndex, error::RgitError};
+use crate::file_utils::{create_dir, create_file, remove_dir};
 use std::path::PathBuf;
 
 pub const RGIT_DIR_NAME: &str = ".rgit";

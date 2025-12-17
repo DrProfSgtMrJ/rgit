@@ -1,6 +1,6 @@
 use crate::{
     handler::HandlerErrors,
-    models::{Repo, RgitError, RgitRepo},
+    repo::{Repo, RgitError, RgitRepo},
 };
 use std::path::PathBuf;
 
