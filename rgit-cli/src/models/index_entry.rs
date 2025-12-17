@@ -1,4 +1,3 @@
-use crate::models::utils::compute_object_type;
 #[cfg(unix)]
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -4,9 +4,6 @@ use std::{
     path::Path,
 };
 
-#[cfg(unix)]
-use crate::models::{IndexEntryObjectType, IndexEntryPermissions, IndexEntryStage};
-
 pub fn create_file(dir_path: &Path, file_name: &str, content: &[u8]) -> Result<(), std::io::Error> {
     let full_path = dir_path.join(file_name);
 
@@ -34,31 +31,6 @@ pub fn remove_dir(full_path: &Path, recursive: bool) -> Result<(), std::io::Erro
     }
 
     Ok(())
-}
-
-#[cfg(unix)]
-pub fn compute_object_type(path: &Path, meta: &fs::Metadata) -> Option<IndexEntryObjectType> {
-    use std::os::unix::fs::MetadataExt;
-    if meta.file_type().is_symlink() {
-        return Some(IndexEntryObjectType::Symbolic);
-    } else if meta.is_file() {
-        let is_executable = meta.mode() & 0o100 != 0;
-        let perm = if is_executable {
-            IndexEntryPermissions::Perm755
-        } else {
-            IndexEntryPermissions::Perm644
-        };
-        return Some(IndexEntryObjectType::RegularFile(perm));
-    } else if meta.is_dir() {
-        let rgit_dir = path.join(".rgit");
-        if rgit_dir.exists() {
-            return Some(IndexEntryObjectType::Gitlink);
-        } else {
-            return None;
-        }
-    }
-
-    None
 }
 
 #[cfg(test)]
